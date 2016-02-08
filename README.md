@@ -7,6 +7,9 @@ An explicit http proxy for when you want to mitm yourself.
 
 I use this because dealing with java cacerts is a huge pain with old application servers. I'd rather go handle my ssl through my OS. 
 
+## TODO
+Make tests that prove it is streaming both ways: multipart file upload where you send a part, then verify the server recieved that part. Then File download where you send a download and verify download part received. 
+
 Links:
 * [go hands off ssl to your OS](https://github.com/golang/go/blob/master/src/crypto/x509/root_windows.go)
 * [if you have to use cert locations in java, use a gui](http://portecle.sourceforge.net/)
