@@ -11,7 +11,7 @@ I use this because dealing with java cacerts is a huge pain with old application
 
 to test streaming:
 
-    cd %GOPATH%\src\github.com\libliflin\mitm\servertest
+    cd %GOPATH%\src\github.com\libliflin\mitm\streamtest
     go run servertest.go
 
 You should see output like:

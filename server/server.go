@@ -36,6 +36,7 @@ func Mitm(tu *url.URL) func(w http.ResponseWriter, r *http.Request) {
 		pres, err := http.DefaultClient.Do(preq)
 		if err != nil {
 			log.Printf("unable to make request %s\n", err)
+			// pres.Body.Close()?
 			http.Error(w, "Host", http.StatusInternalServerError)
 			return
 		}
@@ -43,12 +44,14 @@ func Mitm(tu *url.URL) func(w http.ResponseWriter, r *http.Request) {
 		hj, ok := w.(http.Hijacker)
 		if !ok {
 			log.Printf("webserver doesn't support hijacking\n")
+			pres.Body.Close()
 			http.Error(w, "webserver doesn't support hijacking", http.StatusInternalServerError)
 			return
 		}
 		conn, bufrw, err := hj.Hijack()
 		if err != nil {
 			log.Printf("unable to hijack request %s\n", err)
+			pres.Body.Close()
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
