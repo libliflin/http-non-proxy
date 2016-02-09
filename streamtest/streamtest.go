@@ -28,7 +28,7 @@ func main() {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("request received")
 		uploadChunks.readChunks(r.Body)
-		log.Printf("UPLOAD:   upload stream check completed.")
+		log.Printf("%s upload stream check completed.", uploadChunks.mkr)
 		serverChunks.sendChunks(w)
 	}))
 	defer ts.Close()
@@ -79,9 +79,11 @@ func RandomChunks(mkr string) *Chunks {
 	s := []byte(STRINGSEED)
 	for i := 0; i < NUM_CHUNKS; i++ {
 		rot7(s)
+		log.Printf("%s s: %q", cks.mkr, s)
 		var ck Chunk
 		ck.chunk = make([]byte, 0, len(s))
 		ck.chunk = append(ck.chunk, s...)
+		cks.chunks[i] = ck
 	}
 	return cks
 }
@@ -93,9 +95,10 @@ func (rc *Chunks) readChunks(reader io.Reader) {
 		resChunk := make([]byte, len(ck), len(ck))
 		readIntoResult := 0
 		for readIntoResult < len(ck) {
+			log.Printf("%s [%d] reading %d bytes, starting at %d\n", rc.mkr, i, len(ck), readIntoResult)
 			n, err := reader.Read(resChunk[readIntoResult:])
 			readIntoResult += n
-			if err != nil {
+			if err != nil && (readIntoResult != len(ck) || err != io.EOF) {
 				log.Fatalf("%s unable to read [%d] %v\n", rc.mkr, rc.i, err)
 			}
 		}
@@ -110,17 +113,22 @@ func (rc *Chunks) readChunks(reader io.Reader) {
 
 func (rc *Chunks) Read(p []byte) (n int, err error) {
 	for i := 0; i < len(rc.chunks); i++ {
-		ck := rc.chunks[i]
-		left := len(ck.chunk) - ck.c
-		if i > 0 && ck.c == 0 {
-			log.Printf("%s waiting on client after [%d] file upload chunk sent until it is verified on server.\n", rc.mkr, i-1)
+		chunk := rc.chunks[i].chunk
+		c := rc.chunks[i].c
+		log.Printf("%s [%d] chunk: %q", rc.mkr, i, chunk)
+		log.Printf("%s [%d] c: %d", rc.mkr, i, c)
+		left := len(chunk) - c
+		if i > 0 && c == 0 {
+			log.Printf("%s waiting on client after file upload chunk [%d] sent until it is verified on server.\n", rc.mkr, i-1)
 			rc.mu.Lock()
 			log.Printf("%s lock unlocked on client, sending [%d] chunk.\n", rc.mkr, i)
 		}
 		if left > 0 {
 			sending := min(len(p), left)
-			copy(p, ck.chunk[ck.c:ck.c+sending])
-			ck.c += sending
+			copy(p, chunk[c:c+sending])
+			c += sending
+			log.Printf("%s sending %d bytes", rc.mkr, sending)
+			rc.chunks[i].c = c
 			return sending, nil
 		}
 	}
