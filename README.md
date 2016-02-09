@@ -12,9 +12,9 @@ I use this because dealing with java cacerts is a huge pain with old application
 to test streaming:
 
     cd %GOPATH%\src\github.com\libliflin\mitm\streamtest
-    go run servertest.go
+    go run streamtest.go
 
-You should see output like:
+You should see output something like:
 
     2016/02/08 22:14:46 Testing mitm streaming with locks.
     2016/02/08 22:14:46 DOWNLOAD: lock initialized as locked
